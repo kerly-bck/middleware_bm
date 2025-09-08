@@ -1,6 +1,6 @@
 import express from "express";
 import { getTestProduct } from "./db.js";
-import { updateInventoryLevel, shopifyApi } from "./shopify.js";
+import { updateInventoryLevel } from "./shopify.js";
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 
