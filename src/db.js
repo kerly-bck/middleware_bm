@@ -10,10 +10,20 @@ export async function getConnection() {
     });
 }
 
-// Read a test product
-export async function getTestProduct() {
-    const conn = await getConnection();
-    const [rows] = await conn.execute("SELECT tienda, sku, stock FROM stockTienda LIMIT 1");
-    await conn.end();
-    return rows[0];
+// ✅ Obtener todos los productos
+export async function getAllProducts() {
+    const connection = await getConnection();
+    const [rows] = await connection.query("SELECT sku, stock, inventory_item_id FROM stockTienda");
+    await connection.end();
+    return rows;
+}
+
+// ✅ Guardar inventory_item_id encontrado
+export async function saveInventoryItemId(sku, inventoryItemId) {
+    const connection = await getConnection();
+    await connection.query(
+        "UPDATE stockTienda SET inventory_item_id = ? WHERE sku = ?",
+        [inventoryItemId, sku]
+    );
+    await connection.end();
 }
