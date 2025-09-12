@@ -1,81 +1,103 @@
 import express from "express";
-import { getAllProducts, saveInventoryItemId } from "./db.js";
-import { updateInventoryLevel } from "./shopify.js";
-import shopifyApi from "./shopify.js";
+import { getAllProducts, getUpdatedProducts, saveInventoryItemId } from "./db.js";
+import { getProductInventoryItem, updateInventoryLevel } from "./shopify.js";
 
 const router = express.Router();
 
-// 🏓 Test
-router.get("/ping", (req, res) => {
-    res.json({ message: "pong 🏓" });
-});
-
-// 🗄️ Test DB
-router.get("/test-db", async (req, res) => {
+/**
+ * 🔄 1. Sincronizar TODOS los productos
+ * GET /sync-all
+ */
+router.get("/sync-all", async (req, res) => {
     try {
         const products = await getAllProducts();
-        res.json({ success: true, products });
+        if (!products.length) {
+            return res.json({ message: "No hay productos en la base de datos." });
+        }
+
+        const results = [];
+
+        for (const product of products) {
+            let inventoryItemId = product.inventory_item_id;
+
+            // 👉 Si no existe en la DB, lo buscamos en Shopify
+            if (!inventoryItemId) {
+                const item = await getProductInventoryItem(product.sku);
+                if (!item) {
+                    results.push({ sku: product.sku, status: "❌ No encontrado en Shopify" });
+                    continue;
+                }
+                inventoryItemId = item.inventory_item_id;
+
+                // 👉 Guardamos en la DB para futuras sincronizaciones
+                await saveInventoryItemId(product.sku, inventoryItemId);
+            }
+
+            // 👉 Actualizamos stock en Shopify
+            await updateInventoryLevel(
+                inventoryItemId,
+                process.env.SHOPIFY_LOCATION_ID,
+                product.stock
+            );
+
+            results.push({ sku: product.sku, status: "✅ Sincronizado", stock: product.stock });
+        }
+
+        res.json({ synced: results });
     } catch (error) {
-        console.error("DB error:", error.message);
-        res.status(500).json({ success: false, error: error.message });
+        console.error("Error en sync-all:", error.message);
+        res.status(500).json({ error: error.message });
     }
 });
 
-// 🔄 Sincronización optimizada
-router.get("/sync-inventory", async (req, res) => {
+/**
+ * ⏱️ 2. Sincronizar SOLO productos modificados en las últimas X horas
+ * GET /sync-updated?hours=6
+ */
+router.get("/sync-updated", async (req, res) => {
     try {
-        const products = await getAllProducts();
-        const updates = [];
+        const hours = parseInt(req.query.hours) || 24;
+        const products = await getUpdatedProducts(hours);
 
-        for (const row of products) {
-            try {
-                let inventoryItemId = row.inventory_item_id;
-
-                // 1. Buscar inventory_item_id en Shopify si no está guardado
-                if (!inventoryItemId) {
-                    const searchRes = await shopifyApi.get(`/products.json?limit=250`);
-                    const products = searchRes.data.products;
-
-                    let variantFound = null;
-                    for (const product of products) {
-                        const variant = product.variants.find((v) => v.sku === row.sku);
-                        if (variant) {
-                            variantFound = variant;
-                            break;
-                        }
-                    }
-
-                    if (!variantFound) {
-                        console.warn(`❌ SKU no encontrado en Shopify: ${row.sku}`);
-                        updates.push({ sku: row.sku, updated: false, reason: "SKU no encontrado" });
-                        continue;
-                    }
-
-                    inventoryItemId = variantFound.inventory_item_id;
-
-                    // Guardamos en DB para la próxima sincronización
-                    await saveInventoryItemId(row.sku, inventoryItemId);
-                    console.log(`✅ Guardado inventory_item_id para SKU ${row.sku}`);
-                }
-
-                // 2. Actualizar inventario en Shopify
-                const updateRes = await updateInventoryLevel(
-                    inventoryItemId,
-                    process.env.SHOPIFY_LOCATION_ID,
-                    row.stock
-                );
-
-                updates.push({ sku: row.sku, updated: true, result: updateRes });
-            } catch (err) {
-                console.error(`Error con SKU ${row.sku}:`, err.response?.data || err.message);
-                updates.push({ sku: row.sku, updated: false });
-            }
+        if (!products.length) {
+            return res.json({ message: `No hay productos modificados en las últimas ${hours} horas.` });
         }
 
-        res.json({ success: true, updates });
+        const results = [];
+
+        for (const product of products) {
+            let inventoryItemId = product.inventory_item_id;
+
+            // 👉 Buscar en Shopify si no tenemos inventory_item_id
+            if (!inventoryItemId) {
+                const item = await getProductInventoryItem(product.sku);
+                if (!item) {
+                    results.push({ sku: product.sku, status: "❌ No encontrado en Shopify" });
+                    continue;
+                }
+                inventoryItemId = item.inventory_item_id;
+                await saveInventoryItemId(product.sku, inventoryItemId);
+            }
+
+            // 👉 Actualizar en Shopify
+            await updateInventoryLevel(
+                inventoryItemId,
+                process.env.SHOPIFY_LOCATION_ID,
+                product.stock
+            );
+
+            results.push({
+                sku: product.sku,
+                status: "✅ Sincronizado",
+                stock: product.stock,
+                time_stamp: product.time_stamp
+            });
+        }
+
+        res.json({ synced: results });
     } catch (error) {
-        console.error("Sync error:", error.message);
-        res.status(500).json({ success: false, error: error.message });
+        console.error("Error en sync-updated:", error.message);
+        res.status(500).json({ error: error.message });
     }
 });
 

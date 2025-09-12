@@ -10,7 +10,7 @@ export async function getConnection() {
     });
 }
 
-// ✅ Obtener todos los productos
+// Get all products
 export async function getAllProducts() {
     const connection = await getConnection();
     const [rows] = await connection.query("SELECT sku, stock, inventory_item_id FROM stockTienda");
@@ -18,7 +18,7 @@ export async function getAllProducts() {
     return rows;
 }
 
-// ✅ Guardar inventory_item_id encontrado
+// Save inventory_item_id found
 export async function saveInventoryItemId(sku, inventoryItemId) {
     const connection = await getConnection();
     await connection.query(
@@ -26,4 +26,16 @@ export async function saveInventoryItemId(sku, inventoryItemId) {
         [inventoryItemId, sku]
     );
     await connection.end();
+}
+
+// Get updated products in the last 24 hours
+export async function getUpdatedProducts(hours = 24) {
+    const connection = await getConnection();
+    const [rows] = await connection.query(
+        `SELECT sku, stock, inventory_item_id 
+     FROM stockTienda 
+     WHERE time_stamp >= NOW() - INTERVAL ? HOUR`,
+        [hours]
+    );
+    return rows;
 }
