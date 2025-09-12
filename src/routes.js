@@ -1,6 +1,6 @@
 import express from "express";
 import { getAllProducts, getUpdatedProducts, saveInventoryItemId } from "./db.js";
-import { getProductInventoryItem, updateInventoryLevel } from "./shopify.js";
+import shopifyApi, { getProductInventoryItem, updateInventoryLevel } from "./shopify.js";
 
 const router = express.Router();
 
@@ -110,5 +110,26 @@ router.get("/sync-updated", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+router.get('/ping', (req, res) => res.send('pong 🏓'));
+
+// Test Shopify Endpoint
+router.get("/test-shopify", async (req, res) => {
+    try {
+        const response = await shopifyApi.get("/products.json?limit=1");
+        res.json({
+            success: true,
+            products: response.data.products
+        });
+    } catch (error) {
+        console.error("Error Shopify:", error.response?.data || error.message);
+        res.status(500).json({
+            success: false,
+            error: error.response?.data || error.message
+        });
+    }
+});
+
+
 
 export default router;
