@@ -87,6 +87,12 @@ router.get("/sync-updated", async (req, res) => {
                 await saveInventoryItemId(product.sku, inventoryItemId);
             }
 
+            console.log("Request Shopify:", {
+                location_id: product.tienda,
+                inventory_item_id: inventoryItemId,
+                available: product.stock
+            });
+
             // 👇 Aquí usamos product.tienda como location_id dinámico
             await updateInventoryLevel(inventoryItemId, product.tienda, product.stock);
 
