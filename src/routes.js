@@ -5,7 +5,7 @@ import shopifyApi, { getProductInventoryItem, updateInventoryLevel } from "./sho
 const router = express.Router();
 
 // Endpoint list updated products in the last 2 hours
-// GET /db-updated-products?hours=2
+// GET /db-updated-products?hours=21
 router.get("/db-updated-products", async (req, res) => {
     try {
         const hours = parseInt(req.query.hours) || 2;
