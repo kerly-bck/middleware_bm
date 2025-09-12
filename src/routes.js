@@ -69,37 +69,32 @@ router.get("/sync-updated", async (req, res) => {
         const hours = parseInt(req.query.hours) || 24;
         const products = await getUpdatedProducts(hours);
 
-        if (!products.length) {
-            return res.json({ message: `No hay productos modificados en las últimas ${hours} horas.` });
-        }
-
         const results = [];
 
         for (const product of products) {
             let inventoryItemId = product.inventory_item_id;
 
-            // Buscar en Shopify si no tenemos inventory_item_id
             if (!inventoryItemId) {
                 const item = await getProductInventoryItem(product.sku);
                 if (!item) {
-                    results.push({ sku: product.sku, status: "❌ No encontrado en Shopify" });
+                    results.push({
+                        sku: product.sku,
+                        status: "❌ No encontrado en Shopify"
+                    });
                     continue;
                 }
                 inventoryItemId = item.inventory_item_id;
                 await saveInventoryItemId(product.sku, inventoryItemId);
             }
 
-            // Actualizar en Shopify
-            await updateInventoryLevel(
-                inventoryItemId,
-                process.env.SHOPIFY_LOCATION_ID,
-                product.stock
-            );
+            // 👇 Aquí usamos product.tienda como location_id dinámico
+            await updateInventoryLevel(inventoryItemId, product.tienda, product.stock);
 
             results.push({
                 sku: product.sku,
                 status: "✅ Sincronizado",
                 stock: product.stock,
+                location_id: product.tienda,
                 time_stamp: product.time_stamp
             });
         }
@@ -110,8 +105,6 @@ router.get("/sync-updated", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
-router.get('/ping', (req, res) => res.send('pong 🏓'));
 
 // Test Shopify Endpoint
 router.get("/test-shopify", async (req, res) => {

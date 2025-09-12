@@ -32,7 +32,7 @@ export async function saveInventoryItemId(sku, inventoryItemId) {
 export async function getUpdatedProducts(hours = 24) {
     const connection = await getConnection();
     const [rows] = await connection.query(
-        `SELECT sku, stock, inventory_item_id 
+        `SELECT sku, stock, inventory_item_id, tienda 
      FROM stockTienda 
      WHERE time_stamp >= NOW() - INTERVAL ? HOUR`,
         [hours]
