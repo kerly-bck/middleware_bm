@@ -5,6 +5,21 @@ import { getProductInventoryItem, updateInventoryLevel } from "./shopify.js";
 const router = express.Router();
 
 /**
+ * ✅ Endpoint de prueba: listar productos modificados en las últimas X horas
+ * Ejemplo: GET /test-db-updated?hours=2
+ */
+router.get("/test-db-updated", async (req, res) => {
+    try {
+        const hours = parseInt(req.query.hours) || 2;
+        const products = await getUpdatedProducts(hours);
+        res.json({ updated: products });
+    } catch (error) {
+        console.error("Error en test-db-updated:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
  * 🔄 1. Sincronizar TODOS los productos
  * GET /sync-all
  */
