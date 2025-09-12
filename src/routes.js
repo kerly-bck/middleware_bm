@@ -4,11 +4,9 @@ import { getProductInventoryItem, updateInventoryLevel } from "./shopify.js";
 
 const router = express.Router();
 
-/**
- * ✅ Endpoint de prueba: listar productos modificados en las últimas X horas
- * Ejemplo: GET /test-db-updated?hours=2
- */
-router.get("/test-db-updated", async (req, res) => {
+// Endpoint list updated products in the last 2 hours
+// GET /db-updated-products?hours=2
+router.get("/db-updated-products", async (req, res) => {
     try {
         const hours = parseInt(req.query.hours) || 2;
         const products = await getUpdatedProducts(hours);
@@ -19,10 +17,9 @@ router.get("/test-db-updated", async (req, res) => {
     }
 });
 
-/**
- * 🔄 1. Sincronizar TODOS los productos
- * GET /sync-all
- */
+
+// Sync all products
+// GET /sync-all
 router.get("/sync-all", async (req, res) => {
     try {
         const products = await getAllProducts();
@@ -35,7 +32,7 @@ router.get("/sync-all", async (req, res) => {
         for (const product of products) {
             let inventoryItemId = product.inventory_item_id;
 
-            // 👉 Si no existe en la DB, lo buscamos en Shopify
+            // Si no existe en la DB, lo buscamos en Shopify
             if (!inventoryItemId) {
                 const item = await getProductInventoryItem(product.sku);
                 if (!item) {
@@ -44,11 +41,11 @@ router.get("/sync-all", async (req, res) => {
                 }
                 inventoryItemId = item.inventory_item_id;
 
-                // 👉 Guardamos en la DB para futuras sincronizaciones
+                // Guardamos en la DB para futuras sincronizaciones
                 await saveInventoryItemId(product.sku, inventoryItemId);
             }
 
-            // 👉 Actualizamos stock en Shopify
+            // Actualizamos stock en Shopify
             await updateInventoryLevel(
                 inventoryItemId,
                 process.env.SHOPIFY_LOCATION_ID,
@@ -65,10 +62,8 @@ router.get("/sync-all", async (req, res) => {
     }
 });
 
-/**
- * ⏱️ 2. Sincronizar SOLO productos modificados en las últimas X horas
- * GET /sync-updated?hours=6
- */
+// Sync only updated products in last X hours
+// GET /sync-updated?hours=6
 router.get("/sync-updated", async (req, res) => {
     try {
         const hours = parseInt(req.query.hours) || 24;
@@ -83,7 +78,7 @@ router.get("/sync-updated", async (req, res) => {
         for (const product of products) {
             let inventoryItemId = product.inventory_item_id;
 
-            // 👉 Buscar en Shopify si no tenemos inventory_item_id
+            // Buscar en Shopify si no tenemos inventory_item_id
             if (!inventoryItemId) {
                 const item = await getProductInventoryItem(product.sku);
                 if (!item) {
@@ -94,7 +89,7 @@ router.get("/sync-updated", async (req, res) => {
                 await saveInventoryItemId(product.sku, inventoryItemId);
             }
 
-            // 👉 Actualizar en Shopify
+            // Actualizar en Shopify
             await updateInventoryLevel(
                 inventoryItemId,
                 process.env.SHOPIFY_LOCATION_ID,
