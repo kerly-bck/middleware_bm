@@ -115,7 +115,7 @@ router.get("/sync-updated", async (req, res) => {
 // Test Shopify Endpoint
 router.get("/test-shopify", async (req, res) => {
     try {
-        const response = await shopifyApi.get("/products.json?limit=1");
+        const response = await shopifyApi.get("/products.json?limit=3");
         res.json({
             success: true,
             products: response.data.products
