@@ -84,8 +84,11 @@ router.get("/sync-updated", async (req, res) => {
                     continue;
                 }
                 inventoryItemId = item.inventory_item_id;
+                console.log('inventoryItemId 0', inventoryItemId);
                 await saveInventoryItemId(product.sku, inventoryItemId);
             }
+
+            console.log('inventoryItemId 1', inventoryItemId);
 
             console.log("Request Shopify:", {
                 location_id: product.tienda,
