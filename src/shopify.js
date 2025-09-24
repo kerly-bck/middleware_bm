@@ -8,8 +8,26 @@ const shopifyApi = axios.create({
     },
 });
 
+export async function getProductInventoryItem(sku) {
+    try {
+        // Buscar variantes filtrando por SKU
+        const res = await shopifyApi.get(`/variants.json?sku=${encodeURIComponent(sku)}`);
+
+        if (res.data.variants && res.data.variants.length > 0) {
+            const variant = res.data.variants[0]; // primera coincidencia
+            return variant.inventory_item_id;     // ID que necesitamos para stock
+        }
+
+        console.error(`No se encontró producto con SKU ${sku}`);
+        return null;
+    } catch (error) {
+        console.error("Error en getProductInventoryItem:", error.response?.data || error.message);
+        return null;
+    }
+}
+
 // Get inventory_item_id de un producto (y sus variantes)
-export async function getProductInventoryItem(productId) {
+export async function getProductInventoryItemByID(productId) {
     const res = await shopifyApi.get(`/products/${productId}.json`);
     const product = res.data.product;
 
