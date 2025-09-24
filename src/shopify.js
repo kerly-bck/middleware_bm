@@ -27,7 +27,7 @@ export async function getProductInventoryItem(sku) {
             }
 
             // Extraer el enlace "next" del header Link
-            const linkHeader = response.headers['link'];
+            const linkHeader = res.headers['link'];
             if (linkHeader) {
                 const match = linkHeader.match(/<([^>]+)>; rel="next"/);
                 url = match ? match[1] : null;
