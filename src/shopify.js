@@ -9,39 +9,35 @@ const shopifyApi = axios.create({
 });
 
 export async function getProductInventoryItem(sku) {
-    let page = 1;
-    let hasMore = true;
-    while (hasMore) {
-        try {
-            const res = await shopifyApi.get(`/products.json`, {
-                params: {
-                    limit: 250,
-                    page: page,
-                    fields: 'id,title,variants',
-                },
-            });
+    let url = `https://${process.env.SHOPIFY_STORE_URL}/admin/api/2025-01/products.json?limit=250&fields=id,title,variants`;
 
+    while (url) {
+        try {
+            const res = await shopifyApi.get(`/products.json?limit=250&fields=id,title,variants`);
             const products = res.data.products;
 
-            if (products.length === 0) {
-                hasMore = false;
-                break;
-            }
-            // Buscar el SKU dentro de las variantes
             for (const product of products) {
                 for (const variant of product.variants) {
                     if (variant.sku === sku) {
                         console.log(`✅ Producto encontrado: ${product.title}`);
-                        console.log(`🆔 Variant ID: ${variant.id}`);
-                        console.log(`📦 inventory_item_id: ${variant.inventory_item_id}`);
+                        console.log(`📦 Inventory Item ID: ${variant.inventory_item_id}`);
                         return variant.inventory_item_id;
                     }
                 }
             }
-            page++; // continuar con la siguiente página si hay más productos
+
+            // Extraer el enlace "next" del header Link
+            const linkHeader = response.headers['link'];
+            if (linkHeader) {
+                const match = linkHeader.match(/<([^>]+)>; rel="next"/);
+                url = match ? match[1] : null;
+            } else {
+                url = null;
+            }
+
         } catch (error) {
             console.error('❌ Error al consultar Shopify API:', error.response?.data || error.message);
-            hasMore = false;
+            return null;
         }
     }
     console.log('🔍 SKU no encontrado.');
