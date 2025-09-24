@@ -8,6 +8,10 @@ const shopifyApi = axios.create({
     },
 });
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export async function getProductInventoryItem(sku) {
     let url = `https://${process.env.SHOPIFY_STORE_URL}/admin/api/2025-01/products.json?limit=250&fields=id,title,variants`;
 
@@ -23,6 +27,18 @@ export async function getProductInventoryItem(sku) {
                         console.log(`📦 Inventory Item ID: ${variant.inventory_item_id}`);
                         return variant.inventory_item_id;
                     }
+                }
+            }
+
+            // Check API call usage and pause if needed
+            const callLimitHeader = res.headers['x-shopify-shop-api-call-limit'];
+            if (callLimitHeader) {
+                const [used, total] = callLimitHeader.split('/').map(Number);
+                if (used >= total - 5) {
+                    console.log('⏳ Cerca del límite, esperando...');
+                    await sleep(1000);
+                } else {
+                    await sleep(600); // esperar por defecto
                 }
             }
 
