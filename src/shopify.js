@@ -9,6 +9,70 @@ const shopifyApi = axios.create({
 });
 
 export async function getProductInventoryItem(sku) {
+    let page = 1;
+    let hasMore = true;
+    while (hasMore) {
+        try {
+            const res = await shopifyApi.get(`/products.json`, {
+                params: {
+                    limit: 250,
+                    page: page,
+                    fields: 'id,title,variants',
+                },
+            });
+
+            const products = res.data.products;
+
+            if (products.length === 0) {
+                hasMore = false;
+                break;
+            }
+            // Buscar el SKU dentro de las variantes
+            for (const product of products) {
+                for (const variant of product.variants) {
+                    if (variant.sku === sku) {
+                        console.log(`✅ Producto encontrado: ${product.title}`);
+                        console.log(`🆔 Variant ID: ${variant.id}`);
+                        console.log(`📦 inventory_item_id: ${variant.inventory_item_id}`);
+                        return variant.inventory_item_id;
+                    }
+                }
+            }
+            page++; // continuar con la siguiente página si hay más productos
+        } catch (error) {
+            console.error('❌ Error al consultar Shopify API:', error.response?.data || error.message);
+            hasMore = false;
+        }
+    }
+    console.log('🔍 SKU no encontrado.');
+    return null;
+}
+
+export async function getProductInventoryItem1(sku) {
+    try {
+        const res = await shopifyApi.get(`/products.json?fields=id,title,variants`);
+
+        const products = res.data.products;
+
+        for (const product of products) {
+            for (const variant of product.variants) {
+                if (variant.sku === sku) {
+                    return {
+                        productId: product.id,
+                        variantId: variant.id,
+                        title: product.title
+                    };
+                }
+            }
+        }
+
+        return null;
+    } catch (error) {
+        console.error("Error en getProductInventoryItem:", error.response?.data || error.message);
+        return null;
+    }
+}
+export async function getProductInventoryItem0(sku) {
     try {
         // Buscar variantes filtrando por SKU
         const res = await shopifyApi.get(`/variants.json?sku=${encodeURIComponent(sku)}`);
