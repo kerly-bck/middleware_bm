@@ -1,5 +1,5 @@
-const axios = require('axios');
-const soapClient = require('../utils/soapClient');
+import axios from "axios";
+import soapClient from '../utils/soapClient'
 
 const SOAP_VALIDATE_URL = process.env.SOAP_VALIDATE_URL; // e.g. https://host/wsDatosUser/Service.asmx
 const SOAP_REGISTER_URL = process.env.SOAP_REGISTER_URL; // endpoint register

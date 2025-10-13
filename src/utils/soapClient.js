@@ -1,4 +1,4 @@
-const axios = require('axios');
+import axios from "axios";
 module.exports.postSOAP = (url, xml) => {
     return axios.post(url, xml, {
         headers: {

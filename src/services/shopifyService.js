@@ -1,4 +1,4 @@
-const shopifyApi = require('../shopify');
+import shopifyApi from "../shopify.js";
 
 exports.getCustomer = async (customerId) => {
     const res = await shopifyApi.get(`/customers/${customerId}.json`);

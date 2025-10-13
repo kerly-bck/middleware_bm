@@ -1,14 +1,13 @@
 // app.js
-require('dotenv').config();
-const express = require('express');
-const morgan = require('morgan');
-const cors = require('cors');
+import dotenv from 'dotenv';
+dotenv.config();
+import express from "express";
+import morgan from "morgan";
+import cors from 'cors'
 
-const webhooksRouter = require('./src/routes/webhooks');
-// Rutas existentes
-const inventoryRoutes = require('./src/routes/inventoryRoutes');
-// Nueva ruta de afiliados
-const affiliatesRoutes = require('./src/routes/affiliatesRoutes');
+import webhooksRouter from '../src/routes/webhooks';
+import inventoryRoutes from "./routes/inventoryRoutes.js";
+import affiliatesRoutes from '../src/routes/affiliatesRoutes'
 
 const app = express();
 

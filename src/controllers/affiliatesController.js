@@ -1,5 +1,5 @@
-const shopifyService = require('../services/shopifyService');
-const affiliatesService = require('../services/affiliatesService');
+import shopifyService from '../services/shopifyService';
+import affiliatesService from '../services/affiliatesService';
 
 exports.checkAffiliate = async (req, res) => {
     try {

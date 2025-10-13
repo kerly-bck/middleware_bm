@@ -1,6 +1,6 @@
-const express = require('express');
+import express from "express";
+import affiliatesController from '../controllers/affiliatesController';
 const router = express.Router();
-const affiliatesController = require('../controllers/affiliatesController');
 
 router.post('/check', affiliatesController.checkAffiliate); // principal
 router.post('/force-register', affiliatesController.forceRegister); // opcional: forzar registro manual
