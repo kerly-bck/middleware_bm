@@ -1,6 +1,6 @@
 import express from "express";
 import { getAllProducts, getUpdatedProducts, saveInventoryItemId } from "../db.js";
-import shopifyApi, { getProductInventoryItem, updateInventoryLevel } from "../shopify.js";
+import { shopifyApi, getProductInventoryItem, updateInventoryLevel } from "../shopify.js";
 
 const router = express.Router();
 

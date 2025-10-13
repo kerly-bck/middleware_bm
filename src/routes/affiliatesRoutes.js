@@ -1,7 +1,8 @@
 import express from "express";
 import axios from "axios";
-import {checkAffiliate, } from '../controllers/affiliatesController.js';
+import {checkAffiliate } from '../controllers/affiliatesController.js';
 const router = express.Router();
+import {shopifyApi} from "../shopify.js";
 
 router.post('/check', checkAffiliate); // principal
 // router.post('/force-register', affiliatesController.forceRegister); // opcional: forzar registro manual
