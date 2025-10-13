@@ -1,6 +1,9 @@
 import axios from "axios";
+import dotenv from "dotenv";
 
-export async const shopifyApi = axios.create({
+dotenv.config();
+
+export const shopifyApi = axios.create({
     baseURL: `https://${process.env.SHOPIFY_STORE_URL}/admin/api/2025-01`,
     headers: {
         "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN,

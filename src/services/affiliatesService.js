@@ -1,46 +1,34 @@
-import axios from "axios";
-import {postSOAP, parseRegisterResponse, parseValidateResponse} from '../utils/soapClient.js'
+import soapClient from "../utils/soapClient.js";
+import { shopifyApi } from "../utils/shopifyClient.js";
 
-const SOAP_VALIDATE_URL = process.env.SOAP_VALIDATE_URL; // e.g. https://host/wsDatosUser/Service.asmx
-const SOAP_REGISTER_URL = process.env.SOAP_REGISTER_URL; // endpoint register
+export async function handleAffiliateValidation(customerData) {
+    const { id, first_name, last_name, email, phone, note } = customerData;
 
-exports.validateAffiliateSOAP = async (cedula) => {
-    // arma el XML para dameDatos y postea (soap12)
-    const xml = `<?xml version="1.0" encoding="utf-8"?>
-  <soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-                   xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
-    <soap12:Body>
-      <dameDatos xmlns="http://190.11.19.61:8181/wsDatosSocia">
-        <identificacionUser>${cedula}</identificacionUser>
-      </dameDatos>
-    </soap12:Body>
-  </soap12:Envelope>`;
+    const cedulaMatch = note ? note.match(/\d{10}/) : null;
+    const cedula = cedulaMatch ? cedulaMatch[0] : null;
 
-    const resp = await postSOAP(SOAP_VALIDATE_URL, xml);
-    // parsea la respuesta (depende del WS real). Aquí asumimos un tag <dameDatosResult> con JSON o campos.
-    // Debes adaptar el parser según el body real devuelto.
-    const parsed = parseValidateResponse(resp.data);
-    return parsed; // { exists: true/false, data: {...} }
-};
+    if (!cedula) {
+        console.log("⚠️ Cliente sin cédula, no se valida afiliación.");
+        return;
+    }
 
-exports.registerAffiliateSOAP = async ({ cedula, nombre, apellido, email, telefono }) => {
-    const xml = `<?xml version="1.0" encoding="utf-8"?>
-  <soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-                   xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
-    <soap12:Body>
-      <registrarAfiliado xmlns="http://190.11.19.61:8181/wsDatosSocia">
-        <identificacionUser>${cedula}</identificacionUser>
-        <nombre>${nombre}</nombre>
-        <apellido>${apellido}</apellido>
-        <email>${email}</email>
-        <telefono>${telefono}</telefono>
-      </registrarAfiliado>
-    </soap12:Body>
-  </soap12:Envelope>`;
+    const xml = await soapClient.validateAffiliate(cedula);
+    const exists = xml.includes("<existeAfiliado>true</existeAfiliado>");
 
-    const resp = await postSOAP(SOAP_REGISTER_URL, xml);
-    const parsed = parseRegisterResponse(resp.data);
-    return parsed; // { success: true/false, message: '' }
-};
+    if (!exists) {
+        console.log("🟡 Afiliado no existe, registrando...");
+        await soapClient.registerAffiliate({
+            cedula,
+            nombre: first_name,
+            apellido: last_name,
+            correo: email,
+            telefono: phone,
+        });
+    }
+
+    await shopifyApi.put(`/customers/${id}.json`, {
+        customer: { id, tags: "afiliado" },
+    });
+
+    console.log(`🏷️ Tag 'afiliado' añadida al cliente ${id}`);
+}

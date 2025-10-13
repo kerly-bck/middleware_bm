@@ -1,6 +1,7 @@
 import express from "express";
 import axios from "axios";
 import {checkAffiliate } from '../controllers/affiliatesController.js';
+import { handleAffiliateValidation } from "../services/affiliateService.js";
 const router = express.Router();
 import {shopifyApi} from "../shopify.js";
 
@@ -111,7 +112,7 @@ router.post("/sync", async (req, res) => {
  * Recibe: { identificacionUser: "0102030405" }
  * Retorna: { exists: true/false, data }
  */
-router.post("/validate", async (req, res) => {
+router.post("/validates", async (req, res) => {
     const { identificacionUser } = req.body;
 
     if (!identificacionUser) {
@@ -151,6 +152,16 @@ router.post("/validate", async (req, res) => {
     } catch (error) {
         console.error("❌ Error en validate:", error.message);
         res.status(500).json({ error: "Error al validar afiliación" });
+    }
+});
+
+router.post("/validate", async (req, res) => {
+    try {
+        await handleAffiliateValidation(req.body);
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error("❌ Error en afiliados:", error.message);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
