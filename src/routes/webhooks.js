@@ -1,6 +1,6 @@
 import express from "express";
 import axios from "axios";
-import { shopifyApi } from "../shopifyClient.js";
+import { shopifyApi } from "../shopify.js";
 
 const router = express.Router();
 
