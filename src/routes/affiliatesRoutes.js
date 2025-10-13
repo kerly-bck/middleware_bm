@@ -1,7 +1,7 @@
 import express from "express";
 import axios from "axios";
 import {checkAffiliate } from '../controllers/affiliatesController.js';
-import { handleAffiliateValidation } from "../services/affiliateService.js";
+import { handleAffiliateValidation } from "../services/affiliatesService.js";
 const router = express.Router();
 import {shopifyApi} from "../shopify.js";
 
