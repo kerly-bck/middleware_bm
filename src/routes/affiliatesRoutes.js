@@ -39,8 +39,9 @@ router.post("/sync", async (req, res) => {
         </soap12:Body>
       </soap12:Envelope>`;
 
-        const validateResponse = await axios.post("https://mockserver.com/wsDatosUser/Service.asmx", validateBody, {
-            headers: { "Content-Type": "application/soap+xml; charset=utf-8" },
+        const validateResponse = await axios.post("https://fecfa79a-3e2b-4aaf-8ac1-bf167ed6b2ed.mock.pstmn.io/dameDatos", validateBody, {
+            headers: { "Content-Type": "application/soap+xml; charset=utf-8",
+            "Access-Control-Allow-Origin": "*"},
         });
 
         const xmlValidate = validateResponse.data;
@@ -67,8 +68,8 @@ router.post("/sync", async (req, res) => {
           </soap12:Body>
         </soap12:Envelope>`;
 
-            const registerResponse = await axios.post("https://mockserver.com/wsDatosUser/Service.asmx", registerBody, {
-                headers: { "Content-Type": "application/soap+xml; charset=utf-8" },
+            const registerResponse = await axios.post("https://fecfa79a-3e2b-4aaf-8ac1-bf167ed6b2ed.mock.pstmn.io/registrarAfiliado", registerBody, {
+                headers: { "Content-Type": "application/soap+xml; charset=utf-8", "Access-Control-Allow-Origin": "*" },
             });
 
             const xmlRegister = registerResponse.data;
@@ -100,6 +101,54 @@ router.post("/sync", async (req, res) => {
     } catch (error) {
         console.error("❌ Error en sync afiliados:", error.message);
         res.status(500).json({ error: "Error al validar/registrar afiliado" });
+    }
+});
+
+/**
+ * POST /api/affiliates/validate
+ * Recibe: { identificacionUser: "0102030405" }
+ * Retorna: { exists: true/false, data }
+ */
+router.post("/validate", async (req, res) => {
+    const { identificacionUser } = req.body;
+
+    if (!identificacionUser) {
+        return res.status(400).json({ error: "El campo identificacionUser es obligatorio" });
+    }
+
+    try {
+        const soapBody = `<?xml version="1.0" encoding="utf-8"?>
+      <soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                       xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
+        <soap12:Body>
+          <dameDatos xmlns="http://190.11.19.61:8181/wsDatosSocia">
+            <identificacionUser>${identificacionUser}</identificacionUser>
+          </dameDatos>
+        </soap12:Body>
+      </soap12:Envelope>`;
+
+        const response = await axios.post("https://fecfa79a-3e2b-4aaf-8ac1-bf167ed6b2ed.mock.pstmn.io/dameDatos", soapBody, {
+            headers: { "Content-Type": "application/soap+xml; charset=utf-8", "Access-Control-Allow-Origin": "*" },
+        });
+
+        const xml = response.data;
+        const exists = xml.includes("<existeAfiliado>true</existeAfiliado>");
+
+        let data = null;
+        if (exists) {
+            const nombreMatch = xml.match(/<nombre>(.*?)<\/nombre>/);
+            const telefonoMatch = xml.match(/<telefono>(.*?)<\/telefono>/);
+            data = {
+                nombre: nombreMatch ? nombreMatch[1] : "Afiliado",
+                telefono: telefonoMatch ? telefonoMatch[1] : "",
+            };
+        }
+
+        res.json({ exists, data });
+    } catch (error) {
+        console.error("❌ Error en validate:", error.message);
+        res.status(500).json({ error: "Error al validar afiliación" });
     }
 });
 
