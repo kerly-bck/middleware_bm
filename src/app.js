@@ -19,6 +19,7 @@ app.use(morgan('dev'));
 // --- Rutas principales ---
 app.use('./api/inventory', inventoryRoutes); // ya existente
 app.use('/api/affiliates', affiliatesRoutes); // nueva
+app.use("/api/webhooks", webhooksRouter);
 
 // --- Root de verificación ---
 app.get('/', (req, res) => {
