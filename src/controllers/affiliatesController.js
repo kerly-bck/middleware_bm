@@ -1,5 +1,5 @@
-import shopifyService from '../services/shopifyService';
-import affiliatesService from '../services/affiliatesService';
+import {getCustomer, extractCedulaFromCustomer, addCustomerTag, addCustomerTag} from '../services/shopifyService.js';
+import {validateAffiliateSOAP, registerAffiliateSOAP} from '../services/affiliatesService.js';
 
 exports.checkAffiliate = async (req, res) => {
     try {
@@ -7,20 +7,20 @@ exports.checkAffiliate = async (req, res) => {
         if (!customerId && !cedula) return res.status(400).json({ error: 'customerId o cedula requerido' });
 
         // 1) Obtener customer desde Shopify
-        const customer = await shopifyService.getCustomer(customerId);
+        const customer = await getCustomer(customerId);
         // preferir cedula desde metafield -> note fallback
-        const customerCedula = cedula || shopifyService.extractCedulaFromCustomer(customer);
+        const customerCedula = cedula || extractCedulaFromCustomer(customer);
 
         if (!customerCedula) {
             return res.status(400).json({ error: 'Cédula no encontrada en customer y no fue enviada' });
         }
 
         // 2) Validar con WS afiliados (SOAP)
-        const validation = await affiliatesService.validateAffiliateSOAP(customerCedula);
+        const validation = await validateAffiliateSOAP(customerCedula);
 
         if (validation.exists) {
             // 3a) Si existe - asegurar tag afiliado en Shopify
-            await shopifyService.addCustomerTag(customerId, 'afiliado');
+            await addCustomerTag(customerId, 'afiliado');
             return res.json({ status: 'afiliado', message: 'Cliente afiliado', from: 'validate' });
         }
 
@@ -33,9 +33,9 @@ exports.checkAffiliate = async (req, res) => {
             telefono: customer.phone || ''
         };
 
-        const regRes = await affiliatesService.registerAffiliateSOAP(payload);
+        const regRes = await registerAffiliateSOAP(payload);
         if (regRes.success) {
-            await shopifyService.addCustomerTag(customerId, 'afiliado');
+            await addCustomerTag(customerId, 'afiliado');
             return res.json({ status: 'registered', message: 'Registrado y tag aplicado' });
         }
 
@@ -48,13 +48,13 @@ exports.checkAffiliate = async (req, res) => {
     }
 };
 
-exports.forceRegister = async (req, res) => {
-    // endpoint para admin/test donde se llama register directamente con payload
-    try {
-        const result = await affiliatesService.registerAffiliateSOAP(req.body);
-        res.json(result);
-    } catch (err) {
-        console.error('❌ Error en forceRegister:', err.message);
-        res.status(500).json({ error: 'Error forzando registro de afiliado.' });
-    }
-};
+// exports.forceRegister = async (req, res) => {
+//     // endpoint para admin/test donde se llama register directamente con payload
+//     try {
+//         const result = await affiliatesService.registerAffiliateSOAP(req.body);
+//         res.json(result);
+//     } catch (err) {
+//         console.error('❌ Error en forceRegister:', err.message);
+//         res.status(500).json({ error: 'Error forzando registro de afiliado.' });
+//     }
+// };

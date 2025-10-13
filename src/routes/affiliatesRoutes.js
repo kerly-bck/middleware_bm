@@ -1,9 +1,10 @@
 import express from "express";
-import affiliatesController from '../controllers/affiliatesController';
+import axios from "axios";
+import {checkAffiliate, } from '../controllers/affiliatesController.js';
 const router = express.Router();
 
-router.post('/check', affiliatesController.checkAffiliate); // principal
-router.post('/force-register', affiliatesController.forceRegister); // opcional: forzar registro manual
+router.post('/check', checkAffiliate); // principal
+// router.post('/force-register', affiliatesController.forceRegister); // opcional: forzar registro manual
 
 /**
  * POST /api/affiliates/sync

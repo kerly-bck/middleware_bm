@@ -1,5 +1,5 @@
 import axios from "axios";
-import soapClient from '../utils/soapClient'
+import {postSOAP, parseRegisterResponse, parseValidateResponse} from '../utils/soapClient.js'
 
 const SOAP_VALIDATE_URL = process.env.SOAP_VALIDATE_URL; // e.g. https://host/wsDatosUser/Service.asmx
 const SOAP_REGISTER_URL = process.env.SOAP_REGISTER_URL; // endpoint register
@@ -17,10 +17,10 @@ exports.validateAffiliateSOAP = async (cedula) => {
     </soap12:Body>
   </soap12:Envelope>`;
 
-    const resp = await soapClient.postSOAP(SOAP_VALIDATE_URL, xml);
+    const resp = await postSOAP(SOAP_VALIDATE_URL, xml);
     // parsea la respuesta (depende del WS real). Aquí asumimos un tag <dameDatosResult> con JSON o campos.
     // Debes adaptar el parser según el body real devuelto.
-    const parsed = soapClient.parseValidateResponse(resp.data);
+    const parsed = parseValidateResponse(resp.data);
     return parsed; // { exists: true/false, data: {...} }
 };
 
@@ -40,7 +40,7 @@ exports.registerAffiliateSOAP = async ({ cedula, nombre, apellido, email, telefo
     </soap12:Body>
   </soap12:Envelope>`;
 
-    const resp = await soapClient.postSOAP(SOAP_REGISTER_URL, xml);
-    const parsed = soapClient.parseRegisterResponse(resp.data);
+    const resp = await postSOAP(SOAP_REGISTER_URL, xml);
+    const parsed = parseRegisterResponse(resp.data);
     return parsed; // { success: true/false, message: '' }
 };

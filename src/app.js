@@ -5,9 +5,9 @@ import express from "express";
 import morgan from "morgan";
 import cors from 'cors'
 
-import webhooksRouter from '../src/routes/webhooks';
+import webhooksRouter from '../src/routes/webhooks.js';
 import inventoryRoutes from "./routes/inventoryRoutes.js";
-import affiliatesRoutes from '../src/routes/affiliatesRoutes'
+import affiliatesRoutes from '../src/routes/affiliatesRoutes.js'
 
 const app = express();
 
@@ -19,7 +19,7 @@ app.use(morgan('dev'));
 // --- Rutas principales ---
 app.use('./api/inventory', inventoryRoutes); // ya existente
 app.use('/api/affiliates', affiliatesRoutes); // nueva
-app.use("/api/webhooks", webhooksRouter);
+app.use('/api/webhooks', webhooksRouter);
 
 // --- Root de verificación ---
 app.get('/', (req, res) => {
