@@ -1,5 +1,5 @@
 import soapClient from "../utils/soapClient.js";
-import { shopifyApi } from "../utils/shopifyClient.js";
+import { shopifyApi } from "../shopify.js";
 
 export async function handleAffiliateValidation(customerData) {
     const { id, first_name, last_name, email, phone, note } = customerData;
