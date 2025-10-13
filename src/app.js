@@ -4,6 +4,7 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 
+const webhooksRouter = require('./src/routes/webhooks');
 // Rutas existentes
 const inventoryRoutes = require('./src/routes/inventoryRoutes');
 // Nueva ruta de afiliados
