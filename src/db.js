@@ -11,9 +11,12 @@ export async function getConnection() {
 }
 
 // Get all products
-export async function getAllProducts() {
+export async function getProductsBatch(offset = 0, limit = 1000) {
     const connection = await getConnection();
-    const [rows] = await connection.query("SELECT sku, stock, inventory_item_id FROM stockTienda");
+    const [rows] = await connection.query(
+        "SELECT sku, stock, inventory_item_id FROM stockTienda LIMIT ? OFFSET ?",
+        [limit, offset]
+    );
     await connection.end();
     return rows;
 }

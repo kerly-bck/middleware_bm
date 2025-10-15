@@ -22,40 +22,53 @@ router.get("/db-updated-products", async (req, res) => {
 // GET /sync-all
 router.get("/sync-all", async (req, res) => {
     try {
-        const products = await getAllProducts();
-        if (!products.length) {
-            return res.json({ message: "No hay productos en la base de datos." });
-        }
-
+        const batchSize = 1000;
+        let offset = 0;
+        let totalProcessed = 0;
         const results = [];
 
-        for (const product of products) {
-            let inventoryItemId = product.inventory_item_id;
+        while (true) {
+            const products = await getProductsBatch(offset, batchSize);
+            if (products.length === 0) break;
 
-            // Si no existe en la DB, lo buscamos en Shopify
-            if (!inventoryItemId) {
-                const item = await getProductInventoryItem(product.sku);
-                if (!item) {
-                    results.push({ sku: product.sku, status: "❌ No encontrado en Shopify" });
-                    continue;
+            console.log(`Procesando batch desde ${offset} (${products.length} registros)`);
+
+            for (const product of products) {
+                let inventoryItemId = product.inventory_item_id;
+
+                try {
+                    if (!inventoryItemId) {
+                        const item = await getProductInventoryItem(product.sku);
+                        if (!item) {
+                            results.push({ sku: product.sku, status: "❌ No encontrado en Shopify" });
+                            continue;
+                        }
+
+                        inventoryItemId = item.inventory_item_id;
+                        await saveInventoryItemId(product.sku, inventoryItemId);
+                    }
+
+                    await updateInventoryLevel(
+                        inventoryItemId,
+                        process.env.SHOPIFY_LOCATION_ID,
+                        product.stock
+                    );
+
+                    results.push({ sku: product.sku, status: "✅ Sincronizado", stock: product.stock });
+                } catch (error) {
+                    console.error(`Error procesando SKU ${product.sku}:`, error.message);
+                    results.push({ sku: product.sku, status: `❌ Error: ${error.message}` });
                 }
-                inventoryItemId = item.inventory_item_id;
-
-                // Guardamos en la DB para futuras sincronizaciones
-                await saveInventoryItemId(product.sku, inventoryItemId);
             }
 
-            // Actualizamos stock en Shopify
-            await updateInventoryLevel(
-                inventoryItemId,
-                process.env.SHOPIFY_LOCATION_ID,
-                product.stock
-            );
+            totalProcessed += products.length;
+            offset += batchSize;
 
-            results.push({ sku: product.sku, status: "✅ Sincronizado", stock: product.stock });
+            // Pausa ligera para evitar rate limit de Shopify
+            await new Promise((resolve) => setTimeout(resolve, 2000));
         }
 
-        res.json({ synced: results });
+        res.json({ message: "Sincronización completada", totalProcessed, results });
     } catch (error) {
         console.error("Error en sync-all:", error.message);
         res.status(500).json({ error: error.message });
