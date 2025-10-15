@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllProducts, getUpdatedProducts, saveInventoryItemId } from "../db.js";
+import { getProductsBatch, getUpdatedProducts, saveInventoryItemId } from "../db.js";
 import { shopifyApi, getProductInventoryItem, updateInventoryLevel } from "../shopify.js";
 
 const router = express.Router();
@@ -22,7 +22,7 @@ router.get("/db-updated-products", async (req, res) => {
 // GET /sync-all
 router.get("/sync-all", async (req, res) => {
     try {
-        const batchSize = 1000;
+        const batchSize = 200;
         let offset = 0;
         let totalProcessed = 0;
         const results = [];
@@ -66,6 +66,7 @@ router.get("/sync-all", async (req, res) => {
 
             // Pausa ligera para evitar rate limit de Shopify
             await new Promise((resolve) => setTimeout(resolve, 2000));
+            break;
         }
 
         res.json({ message: "Sincronización completada", totalProcessed, results });
