@@ -1,5 +1,5 @@
 import {getCustomer, extractCedulaFromCustomer, addCustomerTag} from '../services/shopifyService.js';
-import {validateAffiliateSOAP, registerAffiliateSOAP} from '../services/affiliatesService.js';
+// import {validateAffiliateSOAP, registerAffiliateSOAP} from '../services/affiliatesService.js';
 
 exports.checkAffiliate = async (req, res) => {
     try {
