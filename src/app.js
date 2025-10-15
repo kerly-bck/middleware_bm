@@ -6,7 +6,7 @@ import cors from 'cors'
 import webhooksRouter from './routes/webhooks.js';
 
 import inventoryRoutes from "./routes/inventoryRoutes.js";
-import affiliatesRoutes from './routes/affiliatesRoutes.js'
+// import affiliatesRoutes from './routes/affiliatesRoutes.js'
 dotenv.config();
 
 const app = express();
@@ -18,7 +18,7 @@ app.use(morgan('dev'));
 
 // --- Rutas principales ---
 app.use('/api/inventory', inventoryRoutes); // ya existente
-app.use('/api/affiliates', affiliatesRoutes); // nueva
+// app.use('/api/affiliates', affiliatesRoutes); // nueva
 app.use('/api/webhooks', webhooksRouter);
 
 // --- Root de verificación ---
