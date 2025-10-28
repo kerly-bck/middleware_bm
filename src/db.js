@@ -1,6 +1,7 @@
 import mysql from "mysql2/promise";
 
 export async function getConnection() {
+    console.log('host', process.env.DB_HOST);
     return await mysql.createConnection({
         host: process.env.DB_HOST,
         user: process.env.DB_USER,
@@ -11,7 +12,7 @@ export async function getConnection() {
 }
 
 // Get all products
-export async function getProductsBatch(offset = 0, limit = 1000) {
+export async function getProductsBatch(offset = 0, limit = 10) {
     const connection = await getConnection();
     const [rows] = await connection.query(
         "SELECT sku, stock, inventory_item_id FROM stockTienda LIMIT ? OFFSET ?",
@@ -40,5 +41,26 @@ export async function getUpdatedProducts(hours = 24) {
      WHERE time_stamp >= NOW() - INTERVAL ? HOUR`,
         [hours]
     );
+    return rows;
+}
+
+
+// Obtener todos los productos con precios desde la DB
+export async function getAllProductsPrices(batchSize, offset) {
+    const connection = await getConnection();
+    await connection.query("SET SQL_BIG_SELECTS = 1");
+    const [rows] = await connection.query(`
+    SELECT 
+      SKU,
+      pvp,
+      pvp_afi,
+      inventory_item_id
+    FROM itemEcomm
+    WHERE existe_shopify = 1
+    LIMIT ? OFFSET ?
+      `,
+        [batchSize, offset]
+    );
+    await connection.end();
     return rows;
 }

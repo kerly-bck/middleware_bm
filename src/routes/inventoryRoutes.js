@@ -1,6 +1,12 @@
 import express from "express";
-import { getProductsBatch, getUpdatedProducts, saveInventoryItemId } from "../db.js";
-import { shopifyApi, getProductInventoryItem, updateInventoryLevel } from "../shopify.js";
+import {getAllProductsPrices, getProductsBatch, getUpdatedProducts, saveInventoryItemId} from "../db.js";
+import {
+    shopifyApi,
+    getProductInventoryItem,
+    updateInventoryLevel,
+    updateShopifyVariantPrice,
+    updateAffiliatePriceMetafield, getVariantIdBySKU
+} from "../shopify.js";
 
 const router = express.Router();
 
@@ -146,6 +152,61 @@ router.get("/test-shopify", async (req, res) => {
     }
 });
 
+router.get("/sync-prices-batch", async (req, res) => {
+    const limit = parseInt(req.query.limit) || 500;
+    const offset = parseInt(req.query.offset) || 0;
+
+    try {
+        const products = await getAllProductsPrices(limit, offset);
+        console.log(`🟡 Procesando ${products.length} productos (offset ${offset})`);
+
+        let updated = 0;
+
+        for (const p of products) {
+            let variantId = p.variant_id;
+
+            // Buscar variant_id si no está
+            if (!variantId) {
+                variantId = await getVariantIdBySKU(p.SKU);
+                // if (variantId) {
+                //     await connection.query(`UPDATE product_prices SET variant_id = ? WHERE sku = ?`, [variantId, p.SKU]);
+                // } else {
+                //     console.warn(`⚠️ No se encontró variant para SKU: ${p.sku}`);
+                //     continue;
+                // }
+            }
+
+            // const shopifyProduct = await getProductInventoryItem(p.SKU);
+            // console.log('shopifyProduct', shopifyProduct)
+            // if (!shopifyProduct) {
+            //     results.push({
+            //         sku: p.SKU,
+            //         status: "❌ No encontrado en Shopify",
+            //     });
+            //     continue;
+            // }
+
+            // Actualizar precios
+            await updateShopifyVariantPrice(variantId, p.pvp);
+            await updateAffiliatePriceMetafield(variantId, p.pvp_afi);
+
+            updated++;
+        }
+
+        // Preparar siguiente lote
+        const nextOffset = products.length < limit ? null : offset + limit;
+
+        res.json({
+            success: true,
+            processed: products.length,
+            updated,
+            nextOffset,
+        });
+    } catch (error) {
+        console.error("❌ Error en /sync-prices-batch:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 
 export default router;

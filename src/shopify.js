@@ -16,11 +16,14 @@ function sleep(ms) {
 }
 
 export async function getProductInventoryItem(sku) {
+    console.log("Consultando Shopify con URL:", process.env.SHOPIFY_STORE_URL);
     let url = `https://${process.env.SHOPIFY_STORE_URL}/admin/api/2025-01/products.json?limit=250&fields=id,title,variants`;
+    console.log("Shopify URL:", url);
 
     while (url) {
         try {
             const res = await shopifyApi.get(`/products.json?limit=250&fields=id,title,variants`);
+            console.log("Shopify RES:", res);
             const products = res.data.products;
 
             for (const product of products) {
@@ -125,4 +128,62 @@ export async function updateInventoryLevel(inventoryItemId, locationId, availabl
         available,
     });
     return res.data;
+}
+
+
+// 🔍 Buscar variant_id por SKU
+export async function getVariantIdBySKU(sku) {
+    try {
+        const response = await shopifyApi.get(
+            `/variants.json?sku=${encodeURIComponent(sku)}`
+        );
+
+        const variants = response.data.variants;
+        if (variants.length > 0) {
+            return variants[0].id; // Devolvemos el primer match
+        } else {
+            console.warn(`⚠️ No se encontró variant para SKU: ${sku}`);
+            return null;
+        }
+    } catch (error) {
+        console.error(`❌ Error buscando variant_id para SKU ${sku}:`, error.response?.data || error.message);
+        return null;
+    }
+}
+
+// Actualiza el precio normal de una variante
+export async function updateShopifyVariantPrice(variantId, price) {
+    try {
+        console.log(`🔍 variant_id: ${variantId} | price: ${price}`);
+        const response = await shopifyApi.put(
+            `/variants/${variantId}.json`,
+            { variant: { id: variantId, price: price } }
+        );
+        return response.data.variant;
+    } catch (error) {
+        console.error("❌ Error al actualizar precio en Shopify:", error.response?.data || error.message);
+        throw error;
+    }
+}
+
+// Crea o actualiza el precio afiliado como metafield
+export async function updateAffiliatePriceMetafield(variantId, affiliatePrice) {
+    try {
+        console.log(`🔍 variantId: ${variantId} | price: ${affiliatePrice}`);
+        const response = await shopifyApi.post(
+            `/variants/${variantId}/metafields.json`,
+            {
+                metafield: {
+                    namespace: "custom",
+                    key: "precio_afiliado",
+                    type: "number_decimal",
+                    value: affiliatePrice.toString(),
+                },
+            }
+        );
+        return response.data.metafield;
+    } catch (error) {
+        console.error("❌ Error al actualizar metafield:", error.response?.data || error.message);
+        throw error;
+    }
 }
