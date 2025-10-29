@@ -248,7 +248,7 @@ router.get("/sync-prices-batch", async (req, res) => {
             // }
             const shopifyProduct = await getProductInventoryItem9(p.SKU);
             if (!shopifyProduct) {
-                results.push({
+                res.push({
                     sku: p.SKU,
                     status: "❌ No encontrado en Shopify",
                 });
