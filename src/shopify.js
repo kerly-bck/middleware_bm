@@ -203,7 +203,7 @@ export async function getProductInventoryItem9(sku) {
 
         const query = `
       {
-        productVariants(first: 1, query: "sku:${sku}") {
+        productVariants(first: 1, query: "sku:'${sku}'") {
           edges {
             node {
               id
