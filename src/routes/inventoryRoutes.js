@@ -273,6 +273,7 @@ router.get("/sync-prices-batch", async (req, res) => {
             processed: products.length,
             updated,
             nextOffset,
+            next: `/api/inventory/sync-prices-batch?limit=${limit}&offset=${offset + limit}`,
         });
     } catch (error) {
         console.error("❌ Error en /sync-prices-batch:", error);
