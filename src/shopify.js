@@ -159,7 +159,7 @@ export async function getVariantIdBySKU(sku) {
 // Actualiza el precio normal de una variante
 export async function updateShopifyVariantPrice(variantId, price) {
     try {
-        console.log(`🔍 variant_id: ${variantId} | price: ${price}`);
+        console.log(`🔍 variant_id pvp: ${variantId} | price: ${price}`);
         const response = await shopifyApi.put(
             `/variants/${variantId}.json`,
             { variant: { id: variantId, price: price } }
@@ -174,7 +174,7 @@ export async function updateShopifyVariantPrice(variantId, price) {
 // Crea o actualiza el precio afiliado como metafield
 export async function updateAffiliatePriceMetafield(variantId, affiliatePrice) {
     try {
-        console.log(`🔍 variantId: ${variantId} | price: ${affiliatePrice}`);
+        console.log(`🔍 variantId pvp afiliado: ${variantId} | price: ${affiliatePrice}`);
         const response = await shopifyApi.post(
             `/variants/${variantId}/metafields.json`,
             {
@@ -245,10 +245,12 @@ export async function getProductInventoryItem9(sku) {
         const productId = variant.product.id.replace("gid://shopify/Product/", "");
         const variantId = variant.id.replace("gid://shopify/ProductVariant/", "");
 
-        console.log(`✅ Encontrado: ${variant.sku}`);
-        console.log(`📦 Inventory Item ID: ${inventoryItemId}`);
-        console.log(`🛍 Product ID: ${productId}`);
-        console.log(`📘 Producto: ${variant.product.title} (${variant.product.status})`);
+        // console.log(`✅ Encontrado: ${variant.sku}`);
+        // console.log(`📦 Inventory Item ID: ${inventoryItemId}`);
+        // console.log(`🛍 Product ID: ${productId}`);
+        // console.log(`📘 Producto: ${variant.product.title} (${variant.product.status})`);
+
+        console.log(`✅ VariantId: ${variantId} | III: ${inventoryItemId} | Product ID: ${productId} | Status: ${variant.product.status}`);
 
         return {
             inventory_item_id: inventoryItemId,
