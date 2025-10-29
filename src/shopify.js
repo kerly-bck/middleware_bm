@@ -138,10 +138,18 @@ export async function getVariantIdBySKU(sku) {
             `/variants.json?sku=${encodeURIComponent(sku)}`
         );
 
-        const variant = response.data.variants.find(
-            (v) => v.sku === sku && v.title !== "Default Title"
-        );
-        return variant
+        const variants = response.data.variants;
+        if (variants.length > 0) {
+            return variants; //[0].id; // Devolvemos el primer match
+        } else {
+            console.warn(`⚠️ No se encontró variant para SKU: ${sku}`);
+            return null;
+        }
+
+        // const variant = response.data.variants.find(
+        //     (v) => v.sku === sku && v.title !== "Default Title"
+        // );
+        // return variant
     } catch (error) {
         console.error(`❌ Error buscando variant_id para SKU ${sku}:`, error.response?.data || error.message);
         return null;
@@ -182,5 +190,73 @@ export async function updateAffiliatePriceMetafield(variantId, affiliatePrice) {
     } catch (error) {
         console.error("❌ Error al actualizar metafield:", error.response?.data || error.message);
         throw error;
+    }
+}
+
+/**
+ * Obtiene el inventory_item_id desde Shopify usando GraphQL por SKU.
+ * 🚀 Mucho más rápido que la API REST.
+ */
+export async function getProductInventoryItem9(sku) {
+    try {
+        console.log(`🔍 Buscando SKU en Shopify (GraphQL): ${sku}`);
+
+        const query = `
+      {
+        productVariants(first: 1, query: "sku:${sku}") {
+          edges {
+            node {
+              id
+              sku
+              inventoryItem {
+                id
+              }
+              product {
+                id
+                title
+                status
+              }
+            }
+          }
+        }
+      }
+    `;
+
+        const response = await axios.post(
+            `https://${process.env.SHOPIFY_STORE_URL}/admin/api/2025-01/graphql.json`,
+            { query },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN,
+                },
+            }
+        );
+
+        const variantEdges = response.data.data?.productVariants?.edges || [];
+
+        if (variantEdges.length === 0) {
+            console.log(`❌ SKU no encontrado en Shopify: ${sku}`);
+            return null;
+        }
+
+        const variant = variantEdges[0].node;
+        const inventoryItemId = variant.inventoryItem.id.replace("gid://shopify/InventoryItem/", "");
+        const productId = variant.product.id.replace("gid://shopify/Product/", "");
+
+        console.log(`✅ Encontrado: ${variant.sku}`);
+        console.log(`📦 Inventory Item ID: ${inventoryItemId}`);
+        console.log(`🛍 Product ID: ${productId}`);
+        console.log(`📘 Producto: ${variant.product.title} (${variant.product.status})`);
+
+        return {
+            inventory_item_id: inventoryItemId,
+            product_id: productId,
+            variant_id: variant.id,
+        };
+
+    } catch (error) {
+        console.error("🚨 Error en getProductInventoryItem (GraphQL):", error.response?.data || error.message);
+        return null;
     }
 }

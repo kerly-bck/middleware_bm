@@ -5,7 +5,7 @@ import {
     getProductInventoryItem,
     updateInventoryLevel,
     updateShopifyVariantPrice,
-    updateAffiliatePriceMetafield, getVariantIdBySKU
+    updateAffiliatePriceMetafield, getVariantIdBySKU, getProductInventoryItem1, getProductInventoryItem9
 } from "../shopify.js";
 
 const router = express.Router();
@@ -232,28 +232,30 @@ router.get("/sync-prices-batch", async (req, res) => {
         let updated = 0;
 
         for (const p of products) {
-            let variantId = p.variant_id;
+            // let variantId = p.variant_id;
+            //     variantId = await getProductInventoryItem(p.SKU);
 
             // Buscar variant_id si no está
-            if (!variantId) {
-                variantId = await getVariantIdBySKU(p.SKU);
-                // if (variantId) {
-                //     await connection.query(`UPDATE product_prices SET variant_id = ? WHERE sku = ?`, [variantId, p.SKU]);
-                // } else {
-                //     console.warn(`⚠️ No se encontró variant para SKU: ${p.sku}`);
-                //     continue;
-                // }
-            }
-
-            // const shopifyProduct = await getProductInventoryItem(p.SKU);
-            // console.log('shopifyProduct', shopifyProduct)
-            // if (!shopifyProduct) {
-            //     results.push({
-            //         sku: p.SKU,
-            //         status: "❌ No encontrado en Shopify",
-            //     });
-            //     continue;
+            // if (!variantId) {
+            //     // variantId = await getVariantIdBySKU(p.SKU);
+            //     variantId = await getProductInventoryItem(p.SKU);
+            //     // if (variantId) {
+            //     //     await connection.query(`UPDATE product_prices SET variant_id = ? WHERE sku = ?`, [variantId, p.SKU]);
+            //     // } else {
+            //     //     console.warn(`⚠️ No se encontró variant para SKU: ${p.sku}`);
+            //     //     continue;
+            //     // }
             // }
+            const shopifyProduct = await getProductInventoryItem9(p.SKU);
+            if (!shopifyProduct) {
+                results.push({
+                    sku: p.SKU,
+                    status: "❌ No encontrado en Shopify",
+                });
+                continue;
+            }
+            let variantId = shopifyProduct.variant_id;
+            console.log('variantId', variantId)
 
             // Actualizar precios
             await updateShopifyVariantPrice(variantId, p.pvp);
