@@ -255,7 +255,7 @@ router.get("/sync-prices-batch", async (req, res) => {
                 continue;
             }
             let variantId = shopifyProduct.variant_id;
-            console.log('variantId', variantId)
+            // console.log('variantId', variantId)
 
             // Actualizar precios
             await updateShopifyVariantPrice(variantId, p.pvp);
