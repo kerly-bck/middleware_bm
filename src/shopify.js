@@ -252,7 +252,7 @@ export async function getProductInventoryItem9(sku) {
         return {
             inventory_item_id: inventoryItemId,
             product_id: productId,
-            variant_id: variant.id,
+            variant_id: variant.id.split("/")[-1],
         };
 
     } catch (error) {
