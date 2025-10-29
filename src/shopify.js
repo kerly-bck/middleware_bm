@@ -243,6 +243,7 @@ export async function getProductInventoryItem9(sku) {
         const variant = variantEdges[0].node;
         const inventoryItemId = variant.inventoryItem.id.replace("gid://shopify/InventoryItem/", "");
         const productId = variant.product.id.replace("gid://shopify/Product/", "");
+        const variantId = variant.id.replace("gid://shopify/ProductVariant/", "");
 
         console.log(`✅ Encontrado: ${variant.sku}`);
         console.log(`📦 Inventory Item ID: ${inventoryItemId}`);
@@ -252,7 +253,7 @@ export async function getProductInventoryItem9(sku) {
         return {
             inventory_item_id: inventoryItemId,
             product_id: productId,
-            variant_id: variant.id.split("/")[-1],
+            variant_id: variantId,
         };
 
     } catch (error) {
