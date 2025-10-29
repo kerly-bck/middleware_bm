@@ -152,6 +152,75 @@ router.get("/test-shopify", async (req, res) => {
     }
 });
 
+router.get("/sync-all-prices", async (req, res) => {
+    const limit = parseInt(req.query.limit) || 500;
+    let currentOffset = parseInt(req.query.offset) || 0;
+    let isRunning = false;
+    if (isRunning) {
+        return res.status(409).json({ message: "Ya hay una sincronización en curso" });
+    }
+
+    isRunning = true;
+    try {
+        console.log("🔄 Iniciando sincronización masiva de precios...");
+
+        while (true) {
+            const products = await getAllProductsPrices(limit, currentOffset);
+            // 1️⃣ Traer lote desde MySQL
+      //       const [products] = await db.query(`
+      //   SELECT sku, precio_normal, precio_afiliado
+      //   FROM product_prices
+      //   WHERE sku IS NOT NULL
+      //   LIMIT ${BATCH_SIZE} OFFSET ${currentOffset};
+      // `);
+
+            if (products.length === 0) {
+                console.log("✅ Sincronización completada: no hay más productos.");
+                currentOffset = 0;
+                break;
+            }
+
+            console.log(`🟡 Procesando ${products.length} productos (offset ${currentOffset})`);
+
+            for (const p of products) {
+                try {
+                    const variant = await getVariantIdBySKU(p.SKU);
+
+                    if (!variant) {
+                        console.log(`⚠️ No encontrada variant válida para SKU ${p.SKU}`);
+                        continue;
+                    }
+
+                    // 3️⃣ Actualizar precio normal
+                    await updateShopifyVariantPrice(variant.id, p.pvp);
+
+                    // 4️⃣ Actualizar metafield afiliado
+                    await updateAffiliatePriceMetafield(variant.id, p.pvp_afi);
+
+                    console.log(`✅ SKU ${p.SKU} actualizado correctamente`);
+                } catch (err) {
+                    console.error(
+                        `❌ Error al actualizar SKU ${p.SKU}:`,
+                        err.response?.data || err.message
+                    );
+                }
+            }
+
+            // 5️⃣ Avanzar el offset
+            currentOffset += limit
+            ;
+            console.log(`➡️ Avanzando al siguiente lote. Nuevo offset: ${currentOffset}`);
+        }
+
+        res.json({ success: true, message: "Sincronización de precios completada." });
+    } catch (err) {
+        console.error("❌ Error general:", err.message);
+        res.status(500).json({ error: err.message });
+    } finally {
+        isRunning = false;
+    }
+});
+
 router.get("/sync-prices-batch", async (req, res) => {
     const limit = parseInt(req.query.limit) || 500;
     const offset = parseInt(req.query.offset) || 0;

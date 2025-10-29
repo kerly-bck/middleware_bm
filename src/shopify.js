@@ -138,13 +138,10 @@ export async function getVariantIdBySKU(sku) {
             `/variants.json?sku=${encodeURIComponent(sku)}`
         );
 
-        const variants = response.data.variants;
-        if (variants.length > 0) {
-            return variants[0].id; // Devolvemos el primer match
-        } else {
-            console.warn(`⚠️ No se encontró variant para SKU: ${sku}`);
-            return null;
-        }
+        const variant = response.data.variants.find(
+            (v) => v.sku === p.sku && v.title !== "Default Title"
+        );
+        return variant
     } catch (error) {
         console.error(`❌ Error buscando variant_id para SKU ${sku}:`, error.response?.data || error.message);
         return null;
