@@ -259,6 +259,7 @@ router.get("/sync-prices-batch", async (req, res) => {
 
             // Actualizar precios
             await updateShopifyVariantPrice(variantId, p.pvp);
+            await new Promise(r => setTimeout(r, 700));
             await updateAffiliatePriceMetafield(variantId, p.pvp_afi);
 
             updated++;
