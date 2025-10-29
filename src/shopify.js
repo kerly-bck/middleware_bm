@@ -139,7 +139,7 @@ export async function getVariantIdBySKU(sku) {
         );
 
         const variant = response.data.variants.find(
-            (v) => v.sku === p.sku && v.title !== "Default Title"
+            (v) => v.sku === sku && v.title !== "Default Title"
         );
         return variant
     } catch (error) {
