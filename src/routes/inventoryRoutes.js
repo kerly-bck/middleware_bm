@@ -251,6 +251,7 @@ router.get("/sync-prices-batch", async (req, res) => {
                 res.json({
                     sku: p.SKU,
                     status: "❌ No encontrado en Shopify",
+                    next: `/api/inventory/sync-prices-batch?limit=${limit}&offset=${offset + limit}`,
                 });
                 continue;
             }
