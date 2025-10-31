@@ -56,7 +56,9 @@ export async function getAllProductsPrices(batchSize, offset) {
       pvp_afi,
       inventory_item_id
     FROM itemEcomm
-    WHERE existe_shopify = 1
+    WHERE existe_shopify IS NULL  
+    AND inventory_item_id IS NOT NULL
+    AND time_stamp > '2025-10-20 12:18:15'
     LIMIT ? OFFSET ?
       `,
         [batchSize, offset]
